@@ -17,10 +17,10 @@ import java.util.LinkedList;
 
 @Component(role = AbstractMavenLifecycleParticipant.class, hint = "kp-ext")
 public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
-	private static final String ARGLINE_FLAGS = System.getProperty("kp.argLine");
-	private static final String ADDL_TEST_DEPS = System.getProperty("kp.dependencies");
+	private static final String ARGLINE_FLAGS = System.getenv("KP_ARGLINE");
+	private static final String ADDL_TEST_DEPS = System.getenv("KP_DEPENDENCIES");
 
-	private static final boolean RECORD_TESTS = Boolean.valueOf(System.getProperty("kp.recordTests", "false"));
+	private static final boolean RECORD_TESTS = System.getenv("KP_RECORD_TESTS") != null;
 	static HashSet<String> disabledPlugins = new HashSet<String>();
 
 	static {
@@ -42,7 +42,7 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 		for (Plugin p : proj.getBuildPlugins()) {
 			if (disabledPlugins.contains(p.getArtifactId())) {
 				plugsToRemove.add(p);
-				System.out.println("Warning: Deflaker disabling incompatible " + p.getGroupId() + ":" + p.getArtifactId() + " from " + proj.getArtifactId());
+				System.out.println("Warning: KebabPizza disabling incompatible " + p.getGroupId() + ":" + p.getArtifactId() + " from " + proj.getArtifactId());
 			}
 			if (System.getProperty("diffcov.mysql") != null) {
 				//fix for checkstyle in evaluation

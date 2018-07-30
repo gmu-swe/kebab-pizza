@@ -17,7 +17,6 @@ public class TestExecutionListener extends RunListener {
 
 	static MySQLLogger delegate;
 	static FirebaseLogger firebase;
-	static FileWriter logger;
 
 	static {
 		if (System.getProperty("diffcov.mysql") != null && System.getProperty("diffcov.mysqllight") == null) {
@@ -40,14 +39,8 @@ public class TestExecutionListener extends RunListener {
 
 			@Override
 			public void run() {
-				try {
-					logger.close();
-					if (firebase != null)
-						firebase.awaitExit();
-
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				if (firebase != null)
+					firebase.awaitExit();
 			}
 		}));
 	}

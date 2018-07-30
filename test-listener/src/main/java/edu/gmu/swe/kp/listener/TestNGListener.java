@@ -15,7 +15,6 @@ public class TestNGListener implements ITestListener {
 	public final static boolean PRECISE = System.getProperty("diffcov.precise") != null;
 	static FirebaseLogger firebase;
 	static MySQLLogger delegate;
-	static FileWriter logger;
 
 	static {
 		if (System.getProperty("diffcov.mysql") != null && System.getProperty("diffcov.mysqllight") == null) {
@@ -38,14 +37,8 @@ public class TestNGListener implements ITestListener {
 
 			@Override
 			public void run() {
-				try {
-					logger.close();
-					if (firebase != null)
-						firebase.awaitExit();
-
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				if (firebase != null)
+					firebase.awaitExit();
 			}
 		}));
 	}

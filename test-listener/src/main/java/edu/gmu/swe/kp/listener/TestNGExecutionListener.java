@@ -37,20 +37,14 @@ public class TestNGExecutionListener implements ITestListener {
 	String methodName;
 	TestResult res;
 
-	static FileWriter logger;
 	static {
 			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 
 				@Override
 				public void run() {
-					try {
-						logger.close();
 						if (firebase != null)
 							firebase.awaitExit();
 
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
 				}
 			}));
 	}
