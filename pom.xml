@@ -32,6 +32,7 @@
     <modules>
         <module>test-listener</module>
         <module>maven-extension</module>
+        <module>reporting-plugin</module>
     </modules>
     <build>
         <plugins>

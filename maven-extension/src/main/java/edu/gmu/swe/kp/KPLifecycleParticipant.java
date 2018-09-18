@@ -1,5 +1,6 @@
 package edu.gmu.swe.kp;
 
+import edu.gmu.swe.kp.configurator.JacocoConfigurator;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.execution.MavenSession;
@@ -17,10 +18,16 @@ import java.util.LinkedList;
 
 @Component(role = AbstractMavenLifecycleParticipant.class, hint = "kp-ext")
 public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
+	public static final String KP_VERSION = "1.0-SNAPSHOT";
+
 	private static final String ARGLINE_FLAGS = System.getenv("KP_ARGLINE");
 	private static final String ADDL_TEST_DEPS = System.getenv("KP_DEPENDENCIES");
+	private static final boolean FAIL_FAST = System.getenv("KP_FAIL_ON_FAILED_TEST") != null;
+	private static final boolean FORK_PER_TEST = System.getenv("KP_FORK_PER_TEST") != null;
 
 	private static final boolean RECORD_TESTS = System.getenv("KP_RECORD_TESTS") != null;
+
+	private static final boolean DO_JACOCO = System.getenv("KP_JACOCO") != null;
 	static HashSet<String> disabledPlugins = new HashSet<String>();
 
 	static {
@@ -34,7 +41,9 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 		disabledPlugins.add("duplicate-finder-maven-plugin");
 	}
 
+	LinkedList<Configurator> configurators = new LinkedList<>();
 	private LifecycleDebugLogger logger;
+	private MavenSession session;
 
 	private void removeAnnoyingPlugins(MavenProject proj) {
 		LinkedList<Plugin> plugsToRemove = new LinkedList<Plugin>();
@@ -68,17 +77,7 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 		}
 	}
 
-	public void addSurefireLoggerWithoutCoverage(MavenProject project, boolean doFailsafe) throws MojoFailureException {
-		Plugin p = null;
-		for (Plugin o : project.getBuildPlugins()) {
-			if (!doFailsafe && o.getArtifactId().equals("maven-surefire-plugin") && o.getGroupId().equals("org.apache.maven.plugins"))
-				p = o;
-			else if (doFailsafe && o.getArtifactId().equals("maven-failsafe-plugin") && o.getGroupId().equals("org.apache.maven.plugins"))
-				p = o;
-		}
-
-		if (p == null)
-			return;
+	public void rewriteSurefireConfiguration(MavenProject project, Plugin p, boolean isLastRunOfTests) throws MojoFailureException {
 		boolean testNG = false;
 		for (Dependency d : project.getDependencies()) {
 			if (d.getGroupId().equals("org.testng"))
@@ -103,8 +102,8 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 		d.setVersion("1.0-SNAPSHOT");
 		d.setScope("test");
 		project.getDependencies().add(d);
-		if(ADDL_TEST_DEPS != null){
-			for(String dep : ADDL_TEST_DEPS.split(",")){
+		if (ADDL_TEST_DEPS != null) {
+			for (String dep : ADDL_TEST_DEPS.split(",")) {
 				String[] dat = dep.split(":");
 				d = new Dependency();
 				d.setGroupId(dat[0]);
@@ -114,19 +113,23 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 				project.getDependencies().add(d);
 			}
 		}
+
+		p.getDependencies().clear();
 		for (PluginExecution pe : p.getExecutions()) {
 
 			Xpp3Dom config = (Xpp3Dom) pe.getConfiguration();
 			if (config == null)
 				config = new Xpp3Dom("configuration");
-			injectConfig(config, testNG, false);
+			rewriteSurefireExecutionConfig(config, testNG);
 			p.setConfiguration(config);
 			pe.setConfiguration(config);
+			for (Configurator c : configurators)
+				c.applyConfiguration(session, project, p, config, isLastRunOfTests);
 		}
-		p.getDependencies().clear();
+
 	}
 
-	void injectConfig(Xpp3Dom config, boolean testNG, boolean forkPerTest) throws MojoFailureException {
+	void rewriteSurefireExecutionConfig(Xpp3Dom config, boolean testNG) throws MojoFailureException {
 
 		Xpp3Dom argLine = config.getChild("argLine");
 		if (argLine == null) {
@@ -147,20 +150,22 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 		Xpp3Dom parallel = config.getChild("parallel");
 		if (parallel != null)
 			parallel.setValue("none");
-		// Fork is either not present (default fork once, reuse), or is fork
-		// once, reuse fork
+
+		fixForkMode(config, FORK_PER_TEST);
+
+
 		Xpp3Dom properties = config.getChild("properties");
 		if (properties == null) {
 			properties = new Xpp3Dom("properties");
 			config.addChild(properties);
 		}
-		if(RECORD_TESTS) {
+		if (RECORD_TESTS) {
 			Xpp3Dom prop = new Xpp3Dom("property");
 			properties.addChild(prop);
 			Xpp3Dom propName = new Xpp3Dom("name");
 			propName.setValue("listener");
 			Xpp3Dom propValue = new Xpp3Dom("value");
-			if(testNG)
+			if (testNG)
 				propValue.setValue("edu.gmu.swe.kp.listener.TestNGExecutionListener");
 			else
 				propValue.setValue("edu.gmu.swe.kp.listener.TestExecutionListener");
@@ -169,14 +174,29 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 			prop.addChild(propName);
 			prop.addChild(propValue);
 		}
+		for(Configurator c : configurators)
+		{
+			String listener = c.getListenerClass(testNG);
+			if(listener != null)
+			{
+				Xpp3Dom prop = new Xpp3Dom("property");
+				properties.addChild(prop);
+				Xpp3Dom propName = new Xpp3Dom("name");
+				propName.setValue("listener");
+				Xpp3Dom propValue = new Xpp3Dom("value");
+				propValue.setValue(listener);
+				prop.addChild(propName);
+				prop.addChild(propValue);
+			}
+		}
 
 
 		Xpp3Dom testFailureIgnore = config.getChild("testFailureIgnore");
 		if (testFailureIgnore != null) {
-			testFailureIgnore.setValue("true");
+			testFailureIgnore.setValue((FAIL_FAST ? "false" : "true"));
 		} else {
 			testFailureIgnore = new Xpp3Dom("testFailureIgnore");
-			testFailureIgnore.setValue("true");
+			testFailureIgnore.setValue((FAIL_FAST ? "false" : "true"));
 			config.addChild(testFailureIgnore);
 		}
 
@@ -187,17 +207,82 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 		}
 	}
 
+	void fixForkMode(Xpp3Dom config, boolean forkPerTest) {
+		Xpp3Dom forkMode = config.getChild("forkMode");
+		boolean isSetToFork = false;
+		if (forkPerTest) {
+			if (forkMode != null)
+				forkMode.setValue("perTest");
+			else {
+				Xpp3Dom forkCount = config.getChild("forkCount");
+				if (forkCount != null)
+					forkCount.setValue("1");
+				else {
+					forkCount = new Xpp3Dom("forkCount");
+					forkCount.setValue("1");
+					config.addChild(forkCount);
+				}
+				Xpp3Dom reuseForks = config.getChild("reuseForks");
+				if (reuseForks != null)
+					reuseForks.setValue("false");
+				else {
+					reuseForks = new Xpp3Dom("reuseForks");
+					reuseForks.setValue("false");
+					config.addChild(reuseForks);
+				}
+			}
+			return;
+		} else {
+			//Want to NOT fork per-test
+			if (forkMode != null && (forkMode.getValue().equalsIgnoreCase("never") || forkMode.getValue().equalsIgnoreCase("perthread"))) {
+				forkMode.setValue("once");
+				isSetToFork = true;
+			}
+
+			Xpp3Dom forkCount = config.getChild("forkCount");
+			if (forkCount != null && !forkCount.getValue().equals("1")) {
+				isSetToFork = true;
+				forkCount.setValue("1");
+			}
+
+			Xpp3Dom reuseForks = config.getChild("reuseForks");
+			if (reuseForks != null && reuseForks.getValue().equals("false")) {
+				reuseForks.setValue("true");
+			}
+
+			if (!isSetToFork) {
+				forkCount = new Xpp3Dom("forkCount");
+				forkCount.setValue("1");
+				config.addChild(forkCount);
+			}
+		}
+	}
+
 	@Override
 	public void afterProjectsRead(MavenSession session) throws MavenExecutionException {
+
+		this.session = session;
+		if (DO_JACOCO)
+			configurators.add(new JacocoConfigurator());
+		//Find out which is the last run of tests
+		Plugin lastRunOfSurefireOrFailsafe = null;
+		for (MavenProject p : session.getProjects()) {
+			for (Plugin o : p.getBuildPlugins()) {
+				if ((o.getArtifactId().equals("maven-surefire-plugin") || o.getArtifactId().equals("maven-failsafe-plugin"))
+						&& o.getGroupId().equals("org.apache.maven.plugins")) {
+					lastRunOfSurefireOrFailsafe = o;
+				}
+			}
+
+		}
 		for (MavenProject p : session.getProjects()) {
 			removeAnnoyingPlugins(p);
 			try {
-				addSurefireLoggerWithoutCoverage(p,false);
-			} catch (MojoFailureException e) {
-				e.printStackTrace();
-			}
-			try {
-				addSurefireLoggerWithoutCoverage(p,true);
+				LinkedList<Plugin> toModify = new LinkedList<>(p.getBuildPlugins());
+				for (Plugin o : toModify) {
+					if ((o.getArtifactId().equals("maven-surefire-plugin") && o.getGroupId().equals("org.apache.maven.plugins")) || (o.getArtifactId().equals("maven-failsafe-plugin") && o.getGroupId().equals("org.apache.maven.plugins")))
+						rewriteSurefireConfiguration(p, o, lastRunOfSurefireOrFailsafe == o);
+				}
 			} catch (MojoFailureException e) {
 				e.printStackTrace();
 			}
