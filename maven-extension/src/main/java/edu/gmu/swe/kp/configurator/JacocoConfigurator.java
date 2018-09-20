@@ -18,13 +18,15 @@ import java.util.LinkedList;
 public class JacocoConfigurator extends Configurator {
 
 	private static final String JACOCO_OUTPUT_FILE = System.getenv("KP_JACOCO_EXEC_FILE");
-	HashSet<MavenSession> configured = new HashSet<>();
+
+	public JacocoConfigurator(MavenSession session) throws MojoFailureException {
+		super(session);
+		addJacocoPluginToProjects(session);
+	}
 
 	@Override
-	public void applyConfiguration(MavenSession session, MavenProject project, Plugin plugin, Xpp3Dom config, boolean isLastExecutionPerSession) throws MojoFailureException {
+	public void applyConfiguration(MavenProject project, Plugin plugin, Xpp3Dom config, boolean isLastExecutionPerSession) throws MojoFailureException {
 
-		if (configured.add(session))
-			addJacocoPluginToProjects(session);
 		Xpp3Dom argLine = config.getChild("argLine");
 		argLine.setValue(argLine.getValue() + " @{argLine}");
 

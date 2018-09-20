@@ -23,3 +23,11 @@ KP_JACOCO_OUTPUT_FILE=<outputFile> KP_JACOCO=true KP_JACOCO_EXEC_FILE=<jacocoExe
 ```
 Can also set `KP_JACOCO_PER_CLASS=true` and then coverage will be recorded per-test.
 
+Pit Usage
+------
+KP_PIT=true ../../apache-maven-3.5.4/bin/mvn verify
+
+We will automatically mutate ALL files in target/classes of all modules
+We let Pit decide which tests to run though
+We turn off surefire/failsafe and make sure tests get compiled, pre-test modules run, etc.
+Can also do -Dverbose=true to get Pit's verbose logging

@@ -1,6 +1,7 @@
 package edu.gmu.swe.kp;
 
 import edu.gmu.swe.kp.configurator.JacocoConfigurator;
+import edu.gmu.swe.kp.configurator.PitConfigurator;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.execution.MavenSession;
@@ -28,6 +29,7 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 	private static final boolean RECORD_TESTS = System.getenv("KP_RECORD_TESTS") != null;
 
 	private static final boolean DO_JACOCO = System.getenv("KP_JACOCO") != null;
+	private static final boolean DO_PIT = System.getenv("KP_PIT") != null;
 	static HashSet<String> disabledPlugins = new HashSet<String>();
 
 	static {
@@ -124,7 +126,7 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 			p.setConfiguration(config);
 			pe.setConfiguration(config);
 			for (Configurator c : configurators)
-				c.applyConfiguration(session, project, p, config, isLastRunOfTests);
+				c.applyConfiguration(project, p, config, isLastRunOfTests);
 		}
 
 	}
@@ -262,8 +264,15 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 	public void afterProjectsRead(MavenSession session) throws MavenExecutionException {
 
 		this.session = session;
-		if (DO_JACOCO)
-			configurators.add(new JacocoConfigurator());
+		try {
+			if (DO_JACOCO)
+				configurators.add(new JacocoConfigurator(session));
+			if(DO_PIT)
+				configurators.add(new PitConfigurator(session));
+		}catch(MojoFailureException ex){
+			throw new MavenExecutionException("Unable to create KP configurator", ex);
+		}
+
 		//Find out which is the last run of tests
 		Plugin lastRunOfSurefireOrFailsafe = null;
 		for (MavenProject p : session.getProjects()) {
