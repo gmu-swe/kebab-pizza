@@ -83,9 +83,11 @@ public class PitPreparingMojo extends AbstractMojo {
 
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					String str = getAllTypes(file.toFile());
-					if (!onlyTests || str.endsWith("Test") || str.startsWith("Test") || str.endsWith("ITCase"))
-						ret.add(str);
+					if (file.toString().endsWith(".class")) {	// Only handle class files (ends with .class)
+						String str = getAllTypes(file.toFile());
+						if (!onlyTests || str.endsWith("Test") || str.startsWith("Test") || str.endsWith("ITCase"))
+							ret.add(str);
+					}
 					return FileVisitResult.CONTINUE;
 				}
 
