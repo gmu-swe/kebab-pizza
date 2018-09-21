@@ -84,7 +84,7 @@ public class PitConfigurator extends Configurator {
 		newPlug = new Plugin();
 		newPlug.setArtifactId("pitest-maven");
 		newPlug.setGroupId("org.pitest");
-		newPlug.setVersion("1.2.1-SNAPSHOT");
+		newPlug.setVersion("1.4.3-SNAPSHOT");
 		Xpp3Dom configuration = new Xpp3Dom("configuration");
 
 		Xpp3Dom fullMutationMatrix = new Xpp3Dom("fullMutationMatrix");
@@ -93,9 +93,9 @@ public class PitConfigurator extends Configurator {
 
 		Xpp3Dom outputFormats = new Xpp3Dom("outputFormats");
 		Xpp3Dom of = new Xpp3Dom("outputFormat");
-		of.setValue("xml");
+		of.setValue("XML");
 		outputFormats.addChild(of);
-		config.addChild(outputFormats);
+		configuration.addChild(outputFormats);
 
 		Xpp3Dom timestampedReports = new Xpp3Dom("timestampedReports");
 		timestampedReports.setValue("false");
