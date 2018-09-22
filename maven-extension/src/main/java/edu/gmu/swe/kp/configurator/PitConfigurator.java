@@ -91,6 +91,10 @@ public class PitConfigurator extends Configurator {
 		fullMutationMatrix.setValue("true");
 		configuration.addChild(fullMutationMatrix);
 
+		Xpp3Dom failWhenNoMutations = new Xpp3Dom("failWhenNoMutations");
+		failWhenNoMutations.setValue("false");
+		configuration.addChild(failWhenNoMutations);
+
 		Xpp3Dom outputFormats = new Xpp3Dom("outputFormats");
 		Xpp3Dom of = new Xpp3Dom("outputFormat");
 		of.setValue("XML");
