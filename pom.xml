@@ -33,6 +33,7 @@
         <module>test-listener</module>
         <module>maven-extension</module>
         <module>reporting-plugin</module>
+		<module>surefire-provider-junit</module>
     </modules>
     <build>
         <plugins>

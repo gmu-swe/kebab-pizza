@@ -19,6 +19,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Scanner;
 
 @Mojo(name = "preparePIT", defaultPhase = LifecyclePhase.VERIFY)
 public class PitPreparingMojo extends AbstractMojo {
@@ -28,8 +29,8 @@ public class PitPreparingMojo extends AbstractMojo {
 
 	@Parameter(readonly = true, required = true, property = "buildDirs")
 	private String buildOutputDirs;
-	@Parameter(readonly = true, required = true, property = "testBuildDirs")
-	private String buildTestOutputDirs;
+	@Parameter(readonly = true, required = true)
+	private String testsToRunFile;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -49,7 +50,23 @@ public class PitPreparingMojo extends AbstractMojo {
 //		}
 
 		project.getProperties().setProperty("targetClasses",joinString(classesToMutate));
-//		project.getProperties().setProperty("targetTests",joinString(testClasses));
+
+		project.getProperties().setProperty("targetTests",readAllLines(testsToRunFile));
+	}
+	private String readAllLines(String path){
+		StringBuilder sb = new StringBuilder();
+		try {
+			Scanner s = new Scanner(new File(path));
+			while(s.hasNextLine())
+			{
+				sb.append(s.nextLine());
+				sb.append(',');
+			}
+		}catch(IOException ex){
+			ex.printStackTrace();
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		return sb.toString();
 	}
 	private String joinString(Iterable<String> in) {
 		StringBuilder ret = new StringBuilder();

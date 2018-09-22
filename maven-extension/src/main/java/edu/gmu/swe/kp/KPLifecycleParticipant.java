@@ -24,12 +24,13 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 	private static final String ARGLINE_FLAGS = System.getenv("KP_ARGLINE");
 	private static final String ADDL_TEST_DEPS = System.getenv("KP_DEPENDENCIES");
 	private static final boolean FAIL_FAST = System.getenv("KP_FAIL_ON_FAILED_TEST") != null;
-	private static final boolean FORK_PER_TEST = System.getenv("KP_FORK_PER_TEST") != null;
 
 	private static final boolean RECORD_TESTS = System.getenv("KP_RECORD_TESTS") != null;
 
 	private static final boolean DO_JACOCO = System.getenv("KP_JACOCO") != null;
 	private static final boolean DO_PIT = System.getenv("KP_PIT") != null;
+
+	private static final boolean FORK_PER_TEST = System.getenv("KP_FORK_PER_TEST") != null && !DO_PIT;
 	static HashSet<String> disabledPlugins = new HashSet<String>();
 
 	static {
@@ -89,13 +90,13 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 		if (version != null) {
 			try {
 				version = version.substring(2);
-				if (!"18.1".equals(version) && !"19.1".equals(version) && !version.startsWith("20")) {
+				if (!"19.1".equals(version) && !version.startsWith("20")) {
 					int vers = Integer.valueOf(version);
 					if (vers < 17)
-						p.setVersion("2.18");
+						p.setVersion("2.19.1");
 				}
 			} catch (NumberFormatException ex) {
-				p.setVersion("2.18");
+				p.setVersion("2.19.1");
 			}
 		}
 		Dependency d = new Dependency();
