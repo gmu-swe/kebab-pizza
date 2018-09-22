@@ -3,6 +3,7 @@ package edu.gmu.swe.kp.configurator;
 import edu.gmu.swe.kp.Configurator;
 import edu.gmu.swe.kp.KPLifecycleParticipant;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.MojoFailureException;
@@ -48,16 +49,43 @@ public class PitConfigurator extends Configurator {
 		project.getProperties().setProperty("buildDirs", joinString(classFileDirs));
 		project.getProperties().setProperty("testBuildDirs", joinString(testClassFileDirs));
 
-		//Disable test execution natively
-		Xpp3Dom disabled = config.getChild("skipTests");
-		if (disabled == null) {
-			disabled = new Xpp3Dom("skipTests");
-			config.addChild(disabled);
-		}
-		disabled.setValue("true");
-
-
 		//Add KP plugin that will run after tests are compiled to build the targetClasses and targetTests lists
+
+		plugin.getDependencies().clear();
+		Dependency d = new Dependency();
+//		if(testNG)
+//			d.setArtifactId("deflaker-surefire-reexec-testng");
+//		else
+		{
+//			if(shouldUseJUnit47)
+//				d.setArtifactId("deflaker-surefire-reexec-junit47");
+//			else
+				d.setArtifactId("kp-surefire-provider-junit4");
+		}
+		d.setGroupId("edu.gmu.swe.kp");
+		d.setVersion("2.19.1-SNAPSHOT");
+		plugin.addDependency(d);
+
+
+		File testsToRunFile = new File(project.getBuild().getDirectory(),"kpTestsToRun");
+		Xpp3Dom ttrf = new Xpp3Dom("property");
+		Xpp3Dom pname = new Xpp3Dom("name");
+		pname.setValue("testsToRunFile");
+		Xpp3Dom pval = new Xpp3Dom("value");
+		pval.setValue(testsToRunFile.getAbsolutePath());
+		ttrf.addChild(pname);
+		ttrf.addChild(pval);
+		ttrf.setValue(testsToRunFile.getAbsolutePath());
+
+		config.getChild("properties").addChild(ttrf);
+
+		Xpp3Dom failIfNoTests = config.getChild("failIfNoTests");
+		if(failIfNoTests == null)
+		{
+			failIfNoTests = new Xpp3Dom("failIfNoTests");
+			config.addChild(failIfNoTests);
+		}
+		failIfNoTests.setValue("false");
 
 		Plugin newPlug = new Plugin();
 		newPlug.setArtifactId("kp-reporter-plugin");
@@ -78,14 +106,18 @@ public class PitConfigurator extends Configurator {
 		repExec.setGoals(Collections.singletonList("preparePIT"));
 		project.getBuild().addPlugin(newPlug);
 		newPlug.addExecution(repExec);
-
+		Xpp3Dom configuration = new Xpp3Dom("configuration");
+		ttrf = new Xpp3Dom("testsToRunFile");
+		ttrf.setValue(testsToRunFile.getAbsolutePath());
+		configuration.addChild(ttrf);
+		repExec.setConfiguration(configuration);
 
 		//Add PIT as a plugin
 		newPlug = new Plugin();
 		newPlug.setArtifactId("pitest-maven");
 		newPlug.setGroupId("org.pitest");
 		newPlug.setVersion("1.4.3-SNAPSHOT");
-		Xpp3Dom configuration = new Xpp3Dom("configuration");
+		configuration = new Xpp3Dom("configuration");
 
 		Xpp3Dom fullMutationMatrix = new Xpp3Dom("fullMutationMatrix");
 		fullMutationMatrix.setValue("true");

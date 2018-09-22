@@ -1,4 +1,4 @@
-package edu.gmu.swe.kp.listener;
+package edu.gmu.swe.kp.surefire;
 /*
  * Copyright (C) 2010 The Android Open Source Project
  *
@@ -754,3 +754,4 @@ public class Base64 {
 		return new String(decode(s, URL_SAFE));
 	}
 }
+
