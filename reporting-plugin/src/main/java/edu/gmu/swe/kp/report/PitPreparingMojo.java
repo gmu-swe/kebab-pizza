@@ -53,21 +53,25 @@ public class PitPreparingMojo extends AbstractMojo {
 
 		project.getProperties().setProperty("targetTests",readAllLines(testsToRunFile));
 	}
+
 	private String readAllLines(String path){
 		StringBuilder sb = new StringBuilder();
 		try {
 			Scanner s = new Scanner(new File(path));
-			while(s.hasNextLine())
-			{
+			while (s.hasNextLine()) {
 				sb.append(s.nextLine());
 				sb.append(',');
 			}
-		}catch(IOException ex){
+		} catch(IOException ex) {
 			ex.printStackTrace();
 		}
-		sb.deleteCharAt(sb.length() - 1);
+		// Only delete if something in the buffer; possibly empty if no tests
+		if (sb.length() > 0) {
+			sb.deleteCharAt(sb.length() - 1);
+		}
 		return sb.toString();
 	}
+
 	private String joinString(Iterable<String> in) {
 		StringBuilder ret = new StringBuilder();
 		for (String s : in) {
