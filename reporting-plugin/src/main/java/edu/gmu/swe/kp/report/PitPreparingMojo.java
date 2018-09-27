@@ -56,6 +56,8 @@ public class PitPreparingMojo extends AbstractMojo {
 	private String readAllLines(String path){
 		StringBuilder sb = new StringBuilder();
 		try {
+			if(! new File(path).exists())
+				return "";
 			Scanner s = new Scanner(new File(path));
 			while(s.hasNextLine())
 			{
@@ -65,7 +67,8 @@ public class PitPreparingMojo extends AbstractMojo {
 		}catch(IOException ex){
 			ex.printStackTrace();
 		}
-		sb.deleteCharAt(sb.length() - 1);
+		if(sb.length() > 0)
+			sb.deleteCharAt(sb.length() - 1);
 		return sb.toString();
 	}
 	private String joinString(Iterable<String> in) {
@@ -74,7 +77,8 @@ public class PitPreparingMojo extends AbstractMojo {
 			ret.append(s);
 			ret.append(',');
 		}
-		ret.deleteCharAt(ret.length() - 1);
+		if(ret.length() > 0)
+			ret.deleteCharAt(ret.length() - 1);
 		return ret.toString();
 	}
 
