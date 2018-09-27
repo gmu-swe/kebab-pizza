@@ -25,8 +25,9 @@ public class JacocoConfigurator extends Configurator {
 	}
 
 	@Override
-	public void applyConfiguration(MavenProject project, Plugin plugin, Xpp3Dom config, boolean isLastExecutionPerSession) throws MojoFailureException {
+	public void applyConfiguration(MavenProject project, Plugin plugin, PluginExecution pluginExecution, boolean isLastExecutionPerSession) throws MojoFailureException {
 
+		Xpp3Dom config = (Xpp3Dom) pluginExecution.getConfiguration();
 		Xpp3Dom argLine = config.getChild("argLine");
 		argLine.setValue(argLine.getValue() + " @{argLine}");
 

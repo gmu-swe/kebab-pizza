@@ -43,7 +43,8 @@ public class PitConfigurator extends Configurator {
 	}
 
 	@Override
-	public void applyConfiguration(MavenProject project, Plugin plugin, Xpp3Dom config, boolean isLastExecutionInSession) throws MojoFailureException {
+	public void applyConfiguration(MavenProject project, Plugin plugin, PluginExecution pluginExecution, boolean isLastExecutionInSession) throws MojoFailureException {
+		Xpp3Dom config = (Xpp3Dom) pluginExecution.getConfiguration();
 
 
 		project.getProperties().setProperty("buildDirs", joinString(classFileDirs));
@@ -75,7 +76,6 @@ public class PitConfigurator extends Configurator {
 		pval.setValue(testsToRunFile.getAbsolutePath());
 		ttrf.addChild(pname);
 		ttrf.addChild(pval);
-		ttrf.setValue(testsToRunFile.getAbsolutePath());
 
 		config.getChild("properties").addChild(ttrf);
 
@@ -87,36 +87,29 @@ public class PitConfigurator extends Configurator {
 		}
 		failIfNoTests.setValue("false");
 
-		Plugin newPlug = new Plugin();
-		newPlug.setArtifactId("kp-reporter-plugin");
-		newPlug.setGroupId("edu.gmu.swe.kp");
-		newPlug.setVersion(KPLifecycleParticipant.KP_VERSION);
+		Plugin kpPlug = getOrAddPlugin(project,"edu.gmu.swe.kp","kp-reporter-plugin",KPLifecycleParticipant.KP_VERSION);
 		PluginExecution repExec = new PluginExecution();
 		if(plugin.getArtifactId().contains("failsafe"))
 		{
-			repExec.setId("kp-prepare-pit-integration-tests");
+			repExec.setId("kp-prepare-pit-" + pluginExecution.getId());
 			repExec.setPhase("verify");
 		}
 		else
 		{
-			repExec.setId("kp-prepare-pit-tests");
+			repExec.setId("kp-prepare-pit-"+pluginExecution.getId());
 			repExec.setPhase("test");
 
 		}
-		repExec.setGoals(Collections.singletonList("preparePIT"));
-		project.getBuild().addPlugin(newPlug);
-		newPlug.addExecution(repExec);
 		Xpp3Dom configuration = new Xpp3Dom("configuration");
-		ttrf = new Xpp3Dom("testsToRunFile");
-		ttrf.setValue(testsToRunFile.getAbsolutePath());
-		configuration.addChild(ttrf);
+		Xpp3Dom opt = new Xpp3Dom("testsToRunFile");
+		opt.setValue(testsToRunFile.getAbsolutePath());
+		configuration.addChild(opt);
 		repExec.setConfiguration(configuration);
+		repExec.setGoals(Collections.singletonList("preparePIT"));
+		kpPlug.addExecution(repExec);
 
 		//Add PIT as a plugin
-		newPlug = new Plugin();
-		newPlug.setArtifactId("pitest-maven");
-		newPlug.setGroupId("org.pitest");
-		newPlug.setVersion("1.4.3-SNAPSHOT");
+		Plugin newPlug = getOrAddPlugin(project, "org.pitest","pitest-maven","1.4.3-SNAPSHOT");
 		configuration = new Xpp3Dom("configuration");
 
 		Xpp3Dom fullMutationMatrix = new Xpp3Dom("fullMutationMatrix");
@@ -136,7 +129,6 @@ public class PitConfigurator extends Configurator {
 		Xpp3Dom timestampedReports = new Xpp3Dom("timestampedReports");
 		timestampedReports.setValue("false");
 		configuration.addChild(timestampedReports);
-		project.getBuild().addPlugin(newPlug);
 
 		repExec = new PluginExecution();
 		if (plugin.getArtifactId().contains("failsafe")) {

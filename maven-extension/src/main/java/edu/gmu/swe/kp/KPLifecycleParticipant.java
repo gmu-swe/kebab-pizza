@@ -92,7 +92,7 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 				version = version.substring(2);
 				if (!"19.1".equals(version) && !version.startsWith("20")) {
 					int vers = Integer.valueOf(version);
-					if (vers < 17)
+					if (vers <= 17)
 						p.setVersion("2.19.1");
 				}
 			} catch (NumberFormatException ex) {
@@ -127,7 +127,7 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 			p.setConfiguration(config);
 			pe.setConfiguration(config);
 			for (Configurator c : configurators)
-				c.applyConfiguration(project, p, config, isLastRunOfTests);
+				c.applyConfiguration(project, p, pe, isLastRunOfTests);
 		}
 
 	}
