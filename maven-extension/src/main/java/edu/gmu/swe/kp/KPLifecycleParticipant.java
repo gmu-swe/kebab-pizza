@@ -237,7 +237,7 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 			return;
 		} else {
 			//Want to NOT fork per-test
-			if (forkMode != null && (forkMode.getValue().equalsIgnoreCase("never") || forkMode.getValue().equalsIgnoreCase("perthread"))) {
+			if (forkMode != null){
 				forkMode.setValue("once");
 				isSetToFork = true;
 			}
