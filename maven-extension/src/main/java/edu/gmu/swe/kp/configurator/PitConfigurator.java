@@ -112,9 +112,9 @@ public class PitConfigurator extends Configurator {
 		Plugin newPlug = getOrAddPlugin(project, "org.pitest","pitest-maven","1.4.3-SNAPSHOT");
 		configuration = new Xpp3Dom("configuration");
 
-		Xpp3Dom fullMutationMatrix = new Xpp3Dom("fullMutationMatrix");
-		fullMutationMatrix.setValue("true");
-		configuration.addChild(fullMutationMatrix);
+//		Xpp3Dom fullMutationMatrix = new Xpp3Dom("fullMutationMatrix");
+//		fullMutationMatrix.setValue("true");
+//		configuration.addChild(fullMutationMatrix);
 
 		Xpp3Dom failWhenNoMutations = new Xpp3Dom("failWhenNoMutations");
 		failWhenNoMutations.setValue("false");
