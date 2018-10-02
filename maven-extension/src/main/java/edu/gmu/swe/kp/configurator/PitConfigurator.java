@@ -120,6 +120,10 @@ public class PitConfigurator extends Configurator {
 		failWhenNoMutations.setValue("false");
 		configuration.addChild(failWhenNoMutations);
 
+		Xpp3Dom outputCov = new Xpp3Dom("exportLineCoverage");
+		outputCov.setValue("true");
+		configuration.addChild(outputCov);
+
 		Xpp3Dom outputFormats = new Xpp3Dom("outputFormats");
 		Xpp3Dom of = new Xpp3Dom("outputFormat");
 		of.setValue("XML");
