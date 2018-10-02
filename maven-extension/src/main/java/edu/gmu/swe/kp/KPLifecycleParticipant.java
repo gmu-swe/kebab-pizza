@@ -13,6 +13,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.eclipse.aether.repository.RemoteRepository;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -78,6 +79,15 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 					d.setVersion("4.6");
 			}
 		}
+
+		//Also fix dead pluginrepos
+
+		LinkedList<RemoteRepository> reposToRemove = new LinkedList<>();
+		for(RemoteRepository r : proj.getRemotePluginRepositories()){
+			if(r.getUrl().startsWith("http://build.eclipse.org"))
+				reposToRemove.add(r);
+		}
+		proj.getRemotePluginRepositories().removeAll(reposToRemove);
 	}
 
 	public void rewriteSurefireConfiguration(MavenProject project, Plugin p, boolean isLastRunOfTests) throws MojoFailureException {
