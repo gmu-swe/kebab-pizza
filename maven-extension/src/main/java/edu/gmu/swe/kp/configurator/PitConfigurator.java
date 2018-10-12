@@ -13,6 +13,8 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 import java.io.File;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PitConfigurator extends Configurator {
 //	private static final String PIT_OUTPUT_DIR = System.getenv("PIT_OUTPUT_DIR");
@@ -133,6 +135,23 @@ public class PitConfigurator extends Configurator {
 		Xpp3Dom timestampedReports = new Xpp3Dom("timestampedReports");
 		timestampedReports.setValue("false");
 		configuration.addChild(timestampedReports);
+
+		//Check for argLine
+		Xpp3Dom surefireConfig = (Xpp3Dom) plugin.getConfiguration();
+		Xpp3Dom argLine = surefireConfig.getChild("argLine");
+		String theArgs = argLine.getValue().replace("'-XX:OnOutOfMemoryError=kill -9 %p'","");
+		if(argLine != null){
+			Xpp3Dom pitArgLine = new Xpp3Dom("jvmArgs");
+			Pattern regex = Pattern.compile("[^\\s\"']+|\"[^\"]*\"|'[^']*'");
+			Matcher regexMatcher = regex.matcher(theArgs);
+			while (regexMatcher.find()) {
+				Xpp3Dom arg = new Xpp3Dom("jvmArg");
+				arg.setValue(regexMatcher.group());
+				pitArgLine.addChild(arg);
+			}
+
+			configuration.addChild(pitArgLine);
+		}
 
 		repExec = new PluginExecution();
 		if (plugin.getArtifactId().contains("failsafe")) {
