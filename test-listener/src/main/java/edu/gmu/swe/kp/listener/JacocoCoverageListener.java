@@ -8,7 +8,7 @@ import org.junit.runner.notification.RunListener;
 import java.io.IOException;
 
 public class JacocoCoverageListener extends RunListener {
-	public static boolean DUMP_PER_TEST_CLASS = System.getenv("KP_JACOCO_PER_CLASS") != null;
+	public static boolean DUMP_PER_TEST_CLASS = true; //System.getenv("KP_JACOCO_PER_CLASS") != null;
 	String lastTestClass = null;
 	String className;
 	String methodName;

@@ -19,9 +19,8 @@ These environmental variables can be used regardless of the other tooling applie
 Jacoco Usage
 -----
 ```
-KP_JACOCO_OUTPUT_FILE=<outputFile> KP_JACOCO=true KP_JACOCO_EXEC_FILE=<jacocoExecFileToOutputTo> ../../apache-maven-3.5.4/bin/mvn org.jacoco:jacoco-maven-plugin:0.7.9:prepare-agent verify org.jacoco:jacoco-maven-plugin:0.7.9:report
+KP_JACOCO_OUTPUT_FILE=<outputFile> KP_JACOCO=true ../../apache-maven-3.5.4/bin/mvn verify
 ```
-Can also set `KP_JACOCO_PER_CLASS=true` and then coverage will be recorded per-test.
 
 Pit Usage
 ------

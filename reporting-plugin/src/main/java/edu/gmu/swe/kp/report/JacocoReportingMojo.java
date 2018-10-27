@@ -117,18 +117,16 @@ public class JacocoReportingMojo extends AbstractMojo {
 					return;
 				}
 				if (project != null) {
-					LinkedList<String> buildDirsProp = (LinkedList<String>) project.getProperties().get("allBuildDirs");
+					String buildDirsProp =  project.getProperties().getProperty("allBuildDirs");
 					if (buildDirsProp != null) {
-						buildOutputDirs = new String[buildDirsProp.size()];
-						buildDirsProp.toArray(buildOutputDirs);
+						buildOutputDirs = buildDirsProp.split(",");
 						System.out.println("Using build dirs: " + Arrays.toString(buildOutputDirs));
 					}
-					LinkedList<String> sourceDirsProp = (LinkedList<String>) project.getProperties().get("allSourceDirs");
+					String sourceDirsProp = project.getProperties().getProperty("allSourceDirs");
 					if (sourceDirsProp != null) {
-						allSourceDirs = new String[sourceDirsProp.size()];
-						sourceDirsProp.toArray(allSourceDirs);
+						allSourceDirs = sourceDirsProp.split(",");
+						logInfo("Using source dirs: " + Arrays.toString(allSourceDirs));
 					}
-					logInfo("Using source dirs: " + Arrays.toString(allSourceDirs));
 				}
 
 				FileOutputStream fos = new FileOutputStream(outputFile);
