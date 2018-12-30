@@ -111,7 +111,10 @@ public class PitConfigurator extends Configurator {
 		kpPlug.addExecution(repExec);
 
 		//Add PIT as a plugin
-		Plugin newPlug = getOrAddPlugin(project, "org.pitest","pitest-maven","1.4.4-SNAPSHOT");
+		String version = "1.4.4-SNAPSHOT";
+		if(System.getenv("PIT_VERSION") != null)
+			version = System.getenv("PIT_VERSION");
+		Plugin newPlug = getOrAddPlugin(project, "org.pitest","pitest-maven",version);
 		configuration = new Xpp3Dom("configuration");
 
 //		Xpp3Dom fullMutationMatrix = new Xpp3Dom("fullMutationMatrix");
