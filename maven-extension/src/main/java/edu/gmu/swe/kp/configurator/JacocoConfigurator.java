@@ -3,6 +3,7 @@ package edu.gmu.swe.kp.configurator;
 import edu.gmu.swe.kp.Configurator;
 import edu.gmu.swe.kp.KPLifecycleParticipant;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.MojoFailureException;
@@ -29,6 +30,15 @@ public class JacocoConfigurator extends Configurator {
 	@Override
 	public void applyConfiguration(MavenProject project, Plugin plugin, PluginExecution pluginExecution, boolean isLastExecutionPerSession) throws MojoFailureException {
 
+		//Remove any existing jacoco dependency
+		Dependency toRemove = null;
+		for(Dependency d : project.getDependencies())
+		{
+			if(d.getGroupId().equals("org.jacoco") && d.getArtifactId().equals("org.jacoco.agent"))
+				toRemove = d;
+		}
+		if(toRemove != null)
+			project.getDependencies().remove(toRemove);
 		Xpp3Dom config = (Xpp3Dom) pluginExecution.getConfiguration();
 		Xpp3Dom argLine = config.getChild("argLine");
 		argLine.setValue(argLine.getValue() + " @{argLine}");
