@@ -189,7 +189,7 @@ public class JacocoReportingMojo extends AbstractMojo {
 							if (thisSession == null)
 								thisClass.put(curSession, data.getProbes());
 							else {
-								for (int i = 0; i < thisSession.length; i++) {
+								for (int i = 0; i < thisSession.length && i < data.getProbes().length; i++) {
 									thisSession[i] |= data.getProbes()[i];
 								}
 							}
