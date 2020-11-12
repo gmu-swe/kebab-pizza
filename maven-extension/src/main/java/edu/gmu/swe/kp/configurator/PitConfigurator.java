@@ -111,7 +111,7 @@ public class PitConfigurator extends Configurator {
 		kpPlug.addExecution(repExec);
 
 		//Add PIT as a plugin
-		String version = "1.4.4-SNAPSHOT";
+		String version = "1.5.3-SNAPSHOT";
 		if(System.getenv("PIT_VERSION") != null)
 			version = System.getenv("PIT_VERSION");
 		Plugin newPlug = getOrAddPlugin(project, "org.pitest","pitest-maven",version);
