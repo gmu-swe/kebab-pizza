@@ -51,7 +51,7 @@ public class PitPreparingMojo extends AbstractMojo {
 
 		project.getProperties().setProperty("targetClasses",joinString(classesToMutate));
 
-		project.getProperties().setProperty("targetTests",readAllLines(testsToRunFile));
+		project.getProperties().setProperty("targetTests",System.getenv("PIT_TEST"));
 	}
 
 	private String readAllLines(String path){
