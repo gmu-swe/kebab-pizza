@@ -54,20 +54,20 @@ public class PitConfigurator extends Configurator {
 
 		//Add KP plugin that will run after tests are compiled to build the targetClasses and targetTests lists
 
-		plugin.getDependencies().clear();
-		Dependency d = new Dependency();
-//		if(testNG)
-//			d.setArtifactId("deflaker-surefire-reexec-testng");
-//		else
-		{
-//			if(shouldUseJUnit47)
-//				d.setArtifactId("deflaker-surefire-reexec-junit47");
-//			else
-				d.setArtifactId("kp-surefire-provider-junit4");
-		}
-		d.setGroupId("edu.gmu.swe.kp");
-		d.setVersion("2.19.1-SNAPSHOT");
-		plugin.addDependency(d);
+//		plugin.getDependencies().clear();
+//		Dependency d = new Dependency();
+////		if(testNG)
+////			d.setArtifactId("deflaker-surefire-reexec-testng");
+////		else
+//		{
+////			if(shouldUseJUnit47)
+////				d.setArtifactId("deflaker-surefire-reexec-junit47");
+////			else
+//				d.setArtifactId("kp-surefire-provider-junit4");
+//		}
+//		d.setGroupId("edu.gmu.swe.kp");
+//		d.setVersion("2.19.1-SNAPSHOT");
+//		plugin.addDependency(d);
 
 
 		File testsToRunFile = new File(project.getBuild().getDirectory(),"kpTestsToRun");
