@@ -4,6 +4,7 @@ import edu.gmu.swe.kp.configurator.JacocoConfigurator;
 import edu.gmu.swe.kp.configurator.PitConfigurator;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
+import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.lifecycle.internal.LifecycleDebugLogger;
 import org.apache.maven.model.Dependency;
@@ -50,12 +51,13 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 	private MavenSession session;
 
 	private void removeAnnoyingPlugins(MavenProject proj) {
-		LinkedList<Plugin> plugsToRemove = new LinkedList<Plugin>();
-
+		LinkedList<Plugin> newPlugs = new LinkedList<>();
 		for (Plugin p : proj.getBuildPlugins()) {
 			if (disabledPlugins.contains(p.getArtifactId())) {
-				plugsToRemove.add(p);
 				System.out.println("Warning: KebabPizza disabling incompatible " + p.getGroupId() + ":" + p.getArtifactId() + " from " + proj.getArtifactId());
+			}
+			else{
+				newPlugs.add(p);
 			}
 			if (System.getProperty("diffcov.mysql") != null) {
 				//fix for checkstyle in evaluation
@@ -70,7 +72,7 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 				}
 			}
 		}
-		proj.getBuildPlugins().removeAll(plugsToRemove);
+		proj.getBuild().setPlugins(newPlugs);
 
 		//Also, fix terrible junit deps
 		for (Dependency d : proj.getDependencies()) {
@@ -83,11 +85,18 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 		//Also fix dead pluginrepos
 
 		LinkedList<RemoteRepository> reposToRemove = new LinkedList<>();
-		for(RemoteRepository r : proj.getRemotePluginRepositories()){
-			if(r.getUrl().startsWith("http://build.eclipse.org"))
+		for (RemoteRepository r : proj.getRemotePluginRepositories()) {
+			if (r.getUrl().startsWith("http://build.eclipse.org"))
 				reposToRemove.add(r);
 		}
-		proj.getRemotePluginRepositories().removeAll(reposToRemove);
+		if (reposToRemove.size() > 0)
+			proj.getRemotePluginRepositories().removeAll(reposToRemove);
+
+
+		//Also add OSSRH snapshots
+		proj.getRemotePluginRepositories().add(new RemoteRepository.Builder("ossrh-snapshots-kp","default","https://oss.sonatype.org/content/repositories/snapshots").build());
+		proj.getRemoteArtifactRepositories().add(new MavenArtifactRepository("ossrh-snapshots-kp","https://oss.sonatype.org/content/repositories/snapshots", new DefaultRepositoryLayout(), new ArtifactRepositoryPolicy(true, null, null),new ArtifactRepositoryPolicy(false, null, null)));
+		proj.getRemoteProjectRepositories().add(new RemoteRepository.Builder("ossrh-snapshots-kp","default","https://oss.sonatype.org/content/repositories/snapshots").build());
 	}
 
 	public void rewriteSurefireConfiguration(MavenProject project, Plugin p, boolean isLastRunOfTests) throws MojoFailureException {
