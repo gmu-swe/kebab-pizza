@@ -12,13 +12,10 @@ import org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Scanner;
 
 @Mojo(name = "preparePIT", defaultPhase = LifecyclePhase.VERIFY)
@@ -49,9 +46,27 @@ public class PitPreparingMojo extends AbstractMojo {
 //			testClasses.addAll(collectTypes(s, true));
 //		}
 
-		project.getProperties().setProperty("targetClasses",joinString(classesToMutate));
+		project.getProperties().setProperty("targetClasses",(System.getenv("PIT_TARGET_CLASSES") != null ? System.getenv("PIT_TARGET_CLASSES") : joinString(classesToMutate)));
 
-		project.getProperties().setProperty("targetTests",System.getenv("PIT_TEST"));
+		if(System.getenv("PIT_TEST") != null && System.getenv("PIT_TEST").contains("#")){
+			String target = System.getenv("PIT_TEST");
+			StringBuilder targetTests = new StringBuilder();
+			StringBuilder targetMethods = new StringBuilder();
+			for(String each : target.split(",")){
+				String[] d = each.split("#");
+				targetTests.append(d[0]);
+				targetTests.append(',');
+				targetMethods.append(d[1]);
+				targetMethods.append(',');
+			}
+			String targetTestsStr = targetTests.substring(0, targetTests.length() - 1);
+			String targetMethodsStr = targetMethods.substring(0, targetMethods.length() - 1);
+			project.getProperties().setProperty("targetTests", targetTestsStr);
+			project.getProperties().setProperty("includedTestMethods", targetMethodsStr);
+
+		} else {
+			project.getProperties().setProperty("targetTests", System.getenv("PIT_TEST"));
+		}
 	}
 
 	private String readAllLines(String path){
