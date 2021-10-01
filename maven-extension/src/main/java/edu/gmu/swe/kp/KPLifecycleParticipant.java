@@ -162,6 +162,8 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 			config.addChild(argLine);
 		}
 		argLine.setValue(argLine.getValue().replace("${surefireArgLine}", ""));
+		argLine.setValue(argLine.getValue().replace("${jacocoArgLine}", ""));
+
 		if (argLine != null && argLine.getValue().equals("${argLine}"))
 			argLine.setValue("'-XX:OnOutOfMemoryError=kill -9 %p' ");
 		else if (argLine != null) {
